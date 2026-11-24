@@ -1,0 +1,3 @@
+%x = const 5
+%y = const 3
+%z = add %x %y
