@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use polybrook::parse::{Token, tokenize};
+
 const IR_DIR: &str = "tests/ir";
 
 fn root() -> &'static Path {
@@ -35,9 +37,28 @@ fn ir_files() -> Vec<PathBuf> {
     files
 }
 
+fn show(tok: &Token) -> String {
+    let name = |b: &[u8]| String::from_utf8_lossy(b).into_owned();
+    match tok {
+        Token::Def(n) => format!("Def(%{})", name(n)),
+        Token::Ref(n) => format!("Ref(%{})", name(n)),
+        other => format!("{other:?}"),
+    }
+}
+
 #[test]
 fn one_invocation() {
     for file in ir_files() {
         println!("Test: {}", file.display());
+        let src = fs::read(root().join(&file))
+            .unwrap_or_else(|e| panic!("reading {}: {e}", file.display()));
+        match tokenize(&src) {
+            Ok(tokens) => {
+                for (tok, span) in &tokens {
+                    println!("  {span:?}\t{}", show(tok));
+                }
+            }
+            Err(at) => println!("  lex error at byte {at}"),
+        }
     }
 }
